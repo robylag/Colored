@@ -73,6 +73,7 @@ public class WindowLayoutParamsPosition {
         });
     }
 
+    // Posição da tela de filtro
     @SuppressLint("RtlHardcoded")
     @RequiresApi(api = Build.VERSION_CODES.O)
     public static WindowManager.LayoutParams filterTabParams(){
