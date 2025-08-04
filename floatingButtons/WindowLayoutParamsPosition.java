@@ -85,6 +85,7 @@ public class WindowLayoutParamsPosition {
                 PixelFormat.TRANSLUCENT
         );
     }
+    // Posição da mira de leitura
     @RequiresApi(api = Build.VERSION_CODES.O)
     public static WindowManager.LayoutParams circleBrightParams(){
         return new WindowManager.LayoutParams(
