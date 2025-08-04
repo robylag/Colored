@@ -36,18 +36,27 @@ public class ColorNameResult {
     }
     public static String getCategory(String name, SQLiteDatabase db) {
         String category = "Desconhecida";
-        query = "SELECT categoria FROM Cor WHERE nome_cor = ?";
+        query = "SELECT id_cor FROM Cor WHERE nome_cor = ?";
         String[] args = { name };
 
         cursor = db.rawQuery(query, args);
 
         if (cursor != null) {
             if (cursor.moveToFirst()) {
-                category = cursor.getString(cursor.getColumnIndexOrThrow("categoria"));
+                category = cursor.getString(cursor.getColumnIndexOrThrow("id_cor"));
             }
             cursor.close();
         }
 
+        query = "SELECT nome_cor from Categoria WHERE id_categoria = ?";
+        String[] args2 = { category };
+        cursor = db.rawQuery(query, args2);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                category = cursor.getString(cursor.getColumnIndexOrThrow("nome_cor"));
+            }
+            cursor.close();
+        }
         return category;
     }
 

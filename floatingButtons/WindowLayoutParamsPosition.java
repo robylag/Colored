@@ -60,7 +60,6 @@ public class WindowLayoutParamsPosition {
         params.gravity = Gravity.TOP | Gravity.LEFT;
         return params;
     }
-    // Posição do layout raiz do menu de ferramentas
     public static void toolMenuPosition(WindowManager windowManager, View toolMenu, WindowManager.LayoutParams params, View floatingButton) {
         floatingButton.post(() -> {
             int[] buttonLocation = new int[2];
@@ -72,8 +71,6 @@ public class WindowLayoutParamsPosition {
             windowManager.updateViewLayout(toolMenu, params);
         });
     }
-
-    // Posição da tela de filtro
     @SuppressLint("RtlHardcoded")
     @RequiresApi(api = Build.VERSION_CODES.O)
     public static WindowManager.LayoutParams filterTabParams(){

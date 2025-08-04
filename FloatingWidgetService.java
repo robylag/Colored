@@ -165,6 +165,10 @@ public class FloatingWidgetService extends Service {
         WindowManager.LayoutParams resultColorParams = WindowLayoutParamsPosition.resultColorParams(circleBrightParams);    // Parametro do resultado da cor
         WindowManager.LayoutParams darkBackgroundParams = WindowLayoutParamsPosition.darkBackgroundParams();                // Parametro do fundo escuro
         WindowManager.LayoutParams confirmParams = WindowLayoutParamsPosition.confirmParams();                              // Parametro do botão de confirmação de projeção
+        WindowLayoutParamsPosition.toolMenuPosition(windowManager, floatingBtnTools, toolLayoutParams, floatingBtnMain);
+        WindowLayoutParamsPosition.layoutPosition(buttonLayoutParams);                                                  // Posição do botão principal
+        WindowLayoutParamsPosition.deletePosition(deleteLayoutParams);                                                  // Posição do botão de deletar
+        WindowLayoutParamsPosition.resultColorPosition(circleBrightParams);                                             // Posição da mira de leitura de cor
 
         // MODIFICAR NO FINAL
         //WindowManager.LayoutParams filterScreenParams = WindowLayoutParamsPosition.filterScreenParams();
