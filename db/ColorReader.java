@@ -105,6 +105,7 @@ public class ColorReader {
         ProjectionHolder.setMediaProjection(null);
         Log.d("ColorDebug", "ColorResult called with r=" + r + ", g=" + g + ", b=" + b);
         String name = ColorNameResult.getName(r,g,b,db);
+        String nameCategory = ColorNameResult.getCategory(name,db);
         Log.d("ColorReader", "Color name: " + name + " RGB: "+r+","+g+","+b);
 
         FloatingAnimations.fadeBackground(resultColor);
@@ -113,8 +114,11 @@ public class ColorReader {
         View circle = resultColor.findViewById(R.id.colorCircle);
         circle.getBackground().setTint(Color.rgb(r, g, b));
 
+
         TextView nome = resultColor.findViewById(R.id.colorName);
+        TextView categoria = resultColor.findViewById(R.id.colorCategory);
         nome.setText(name);
+        categoria.setText(nameCategory);
 
         // Valor HEX
         TextView hexValue = resultColor.findViewById(R.id.hexValue);
