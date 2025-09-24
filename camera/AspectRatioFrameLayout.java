@@ -28,7 +28,7 @@ public class AspectRatioFrameLayout extends FrameLayout {
         requestLayout(); // Força o layout a ser recalculado com a nova proporção
     }
 
-    // Sobrescreve o método de medição do layout para manter a proporção desejada
+    // Sobrescreve o metodo de medição do layout para manter a proporção desejada
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         // Obtém as dimensões disponíveis

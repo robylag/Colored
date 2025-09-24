@@ -6,6 +6,9 @@ import android.animation.ObjectAnimator;
 import android.view.View;// Animação de FadeIn do botão excluir.
 import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.ImageView;
+
+import com.example.coloredapp.R;
 
 public class FloatingAnimations {
     public static void scaleUp(View btn){
@@ -89,5 +92,53 @@ public class FloatingAnimations {
             }
         });
         fadeOut.start();
+    }
+
+    public static void closeToolFloating(View darkBackground, View toolMenu, View floatingBtnMain, View toolMenuRoot, ImageView floatingBtnIcon) {
+        FloatingAnimations.fadeOut(darkBackground);
+        FloatingAnimations.fadeOut(toolMenu);
+        FloatingAnimations.scaleDown(floatingBtnMain);
+        floatingBtnIcon.setImageResource(R.drawable.logo);
+        toolMenuRoot.setVisibility(View.GONE);
+    }
+
+    public static void plateChange(ImageView plate, int imageResId) {
+        // Garante que a view está visível e com opacidade total
+        plate.setAlpha(1f);
+
+        // Fade-out
+        plate.animate()
+                .alpha(0f)
+                .setDuration(100) // tempo do fade-out
+                .withEndAction(() -> {
+                    // Troca a imagem SOMENTE depois do fade-out terminar
+                    plate.setImageResource(imageResId);
+
+                    // Fade-in
+                    plate.animate()
+                            .alpha(1f)
+                            .setDuration(300) // tempo do fade-in
+                            .start();
+                })
+                .start();
+    }
+
+    public static void captureFade(View btn, int duration) {
+        btn.setVisibility(View.VISIBLE);
+        btn.setAlpha(0f);
+
+        // Fade In (0 → 1)
+        btn.animate()
+                .alpha(1f)
+                .setDuration(duration)
+                .withEndAction(() -> {
+                    // Depois do fade in, inicia o fade out
+                    btn.animate()
+                            .alpha(0f)
+                            .setDuration(duration)
+                            .withEndAction(() -> btn.setVisibility(View.GONE))
+                            .start();
+                })
+                .start();
     }
 }

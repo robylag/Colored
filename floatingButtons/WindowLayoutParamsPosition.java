@@ -60,11 +60,23 @@ public class WindowLayoutParamsPosition {
         params.gravity = Gravity.TOP | Gravity.LEFT;
         return params;
     }
-    public static void toolMenuPosition(WindowManager windowManager, View toolMenu, WindowManager.LayoutParams params, View floatingButton) {
+    public static void toolMenuPositionEsq(WindowManager windowManager, View toolMenu, WindowManager.LayoutParams params, View floatingButton) {
         floatingButton.post(() -> {
             int[] buttonLocation = new int[2];
             floatingButton.getLocationOnScreen(buttonLocation);
             int x = buttonLocation[0] + floatingButton.getWidth() - 100;
+            int y = buttonLocation[1] + floatingButton.getHeight() - 450;
+            params.x = x;
+            params.y = y;
+            windowManager.updateViewLayout(toolMenu, params);
+        });
+    }
+
+    public static void toolMenuPositionDir(WindowManager windowManager, View toolMenu, WindowManager.LayoutParams params, View floatingButton) {
+        floatingButton.post(() -> {
+            int[] buttonLocation = new int[2];
+            floatingButton.getLocationOnScreen(buttonLocation);
+            int x = buttonLocation[0] + floatingButton.getWidth() - 650;
             int y = buttonLocation[1] + floatingButton.getHeight() - 450;
             params.x = x;
             params.y = y;
@@ -157,6 +169,19 @@ public class WindowLayoutParamsPosition {
         });
     }
     public static WindowManager.LayoutParams confirmParams() {
+        return new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                        ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                        : WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR,
+                PixelFormat.TRANSLUCENT
+        );
+    }
+    public static WindowManager.LayoutParams resultScreenshotparams() {
         return new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,

@@ -18,6 +18,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -30,6 +31,7 @@ import androidx.core.app.NotificationCompat;
 
 import com.example.coloredapp.db.ColorReader;
 import com.example.coloredapp.db.DatabaseHelper;
+import com.example.coloredapp.filter.CaptureScreenShot;
 import com.example.coloredapp.floatingButtons.*;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -119,42 +121,53 @@ public class FloatingWidgetService extends Service {
         return null;
     }
 
-    // Inicializa todos os elementos da UI flutuante e lógica de toques
+    // FUNÇÃO RESPONSÁVEL PELA INICIALIZAÇÃO DA INTERFACE PRINCIPAL DO APLICATIVO
     @SuppressLint({"RtlHardcoded", "InflateParams", "ClickableViewAccessibility", "ResourceType"})
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void initializeFloatingUI() {
+        // INSTANCIA DO BANCO DE DADOS PARA LEITURA DE COR
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         SQLiteDatabase db = dbHelper.openDatabase();
+
+        // INSTANCIA PARA A FINALIZAÇÃO DA PROJEÇÃO
+        ProjectionHolder.getMediaProjection().stop();
+        ProjectionHolder.setMediaProjection(null);
 
         // INSTANCIA PARA TODOS OS LAYOUT
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
 
         // INFLANDO TODAS AS VIEWS
+
+        // INTERFACE PRINCIPAL E PAINÉIS DE FUNCIONALIDADES
         View floatingBtnDelete = inflater.inflate(R.layout.delete_button_layout, null);                 // Pegando o layout do botão de deletar
         View floatingBtnMain = inflater.inflate(R.layout.main_button_layout, null);                     // Pegando o layout do botão principal
         View filterTab = inflater.inflate(R.layout.filter_tab_layout, null);                            // Pegando o layout da aba de filtro
-        View filterScreen = inflater.inflate(R.layout.glsurfaceview_filter, null);                      // Pegando o layout da tela de filtro
         View darkBackground = inflater.inflate(R.layout.black_background, null);                        // Pegando o layout do fundo escuro
         View floatingConfirmProjection = inflater.inflate(R.layout.confirm_projection_layout, null);    // Pegando o layout do botão de confirmação de projeção
         View resultColor = inflater.inflate(R.layout.result_color_layout, null);                        // Pegando o layout do resultado da cor
 
+        // LAYOUTS DOS BOTÕES PRINCIPAIS
         ImageView floatingIcon = floatingBtnMain.findViewById(R.id.icon);                                    // Pegando a imagem do botão principal
         View toolMenuRoot = inflater.inflate(R.layout.tool_buttons_layout, null);                       // Pegando o layout do menu de ferramentas
         View floatingBtnTools = toolMenuRoot.findViewById(R.id.toolMenu);                                    // Pegando o layout do menu de ferramentas
         View floatingButtonCamera = toolMenuRoot.findViewById(R.id.floatingButtonCamera);                    // Pegando o layout do botão de câmera
         View floatingButtonFilter = toolMenuRoot.findViewById(R.id.floatingButtonFilter);                    // Pegando o layout do botão de filtro
         View floatingButtonScan = toolMenuRoot.findViewById(R.id.floatingButtonColorPicker);                 // Pegando o layout do botão de leitura de cor
-        View floatingButtonMenu = toolMenuRoot.findViewById(R.id.floatingButtonMenu);                        // Pegando o layout do botão de menu
+        View floatingButtonMenu = toolMenuRoot.findViewById(R.id.floatingButtonTest);                        // Pegando o layout do botão de menu
 
+        // LAYOUTS DA LEITURA DE COR
         View closeButtonColor = resultColor.findViewById(R.id.closeButton);                                  // Pegando o layout do botão de fechar a cor
-
         ScannerScopeBright circleBright = new ScannerScopeBright(this);                              // Pegando o layout da mira de leitura de cor
 
+        // LAYOUTS DA PAINEL DE FILTRO DE TELA
         View btnProtanopia = filterTab.findViewById(R.id.filterProtanopia);                                 // Pegando o botão de protanopia
         View btnDeuteranopia = filterTab.findViewById(R.id.filterDeuteranopia);                             // Pegando o botão de Deuteranopia
         View btnTritanopia = filterTab.findViewById(R.id.filterTritanopia);                                 // Pegando o botão de Tritanopia
-        View btnNoFilter = filterTab.findViewById(R.id.filterNone);                                         // Pegando o botão de nenhum filtro
+        View screenshotFilter = inflater.inflate(R.layout.result_screenshot, null);                    // Pegando o layout do resultado da screenshot
+        View saveCaptureFilter = screenshotFilter.findViewById(R.id.saveCapture);                           // Pegando o botão de salvar a screenshot
+        View closeButtonScreenshot = screenshotFilter.findViewById(R.id.closeCapture);                      // Pegando o botão de fechar a screenshot
+        View screenshotBright = inflater.inflate(R.layout.screenshot_bright, null);                        // Pegando o layout da screenshot bright)
 
         // DEFINIÇÃO DE PARAMETROS DE CADA LAYOUT
         WindowManager.LayoutParams buttonLayoutParams = WindowLayoutParamsPosition.layoutparams();                          // Parametro do botão principal
@@ -165,33 +178,44 @@ public class FloatingWidgetService extends Service {
         WindowManager.LayoutParams resultColorParams = WindowLayoutParamsPosition.resultColorParams(circleBrightParams);    // Parametro do resultado da cor
         WindowManager.LayoutParams darkBackgroundParams = WindowLayoutParamsPosition.darkBackgroundParams();                // Parametro do fundo escuro
         WindowManager.LayoutParams confirmParams = WindowLayoutParamsPosition.confirmParams();                              // Parametro do botão de confirmação de projeção
-        WindowLayoutParamsPosition.toolMenuPosition(windowManager, floatingBtnTools, toolLayoutParams, floatingBtnMain);
-        WindowLayoutParamsPosition.layoutPosition(buttonLayoutParams);                                                  // Posição do botão principal
-        WindowLayoutParamsPosition.deletePosition(deleteLayoutParams);                                                  // Posição do botão de deletar
-        WindowLayoutParamsPosition.resultColorPosition(circleBrightParams);                                             // Posição da mira de leitura de cor
-
-        // MODIFICAR NO FINAL
-        //WindowManager.LayoutParams filterScreenParams = WindowLayoutParamsPosition.filterScreenParams();
+        WindowManager.LayoutParams resultScreenshotParams = WindowLayoutParamsPosition.resultScreenshotparams();            // Parametro do resultado da screenshot;
+        WindowLayoutParamsPosition.toolMenuPositionEsq(windowManager, floatingBtnTools, toolLayoutParams, floatingBtnMain); // Posição do menu de ferramentas à esquerda
+        WindowLayoutParamsPosition.layoutPosition(buttonLayoutParams);                                                      // Posição do botão principal
+        WindowLayoutParamsPosition.deletePosition(deleteLayoutParams);                                                      // Posição do botão de deletar
+        WindowLayoutParamsPosition.resultColorPosition(circleBrightParams);                                                 // Posição da mira de leitura de cor// Posição da aba de filtro
 
         // ADIÇÃO DAS VIEWS/LAYOUT A TELA DO USUÁRIO
         windowManager.addView(darkBackground, darkBackgroundParams);                                        // Adiciona o fundo escuro a tela
         WindowLayoutParamsPosition.applyImmersiveMode(darkBackground);
         windowManager.addView(toolMenuRoot, toolLayoutParams);                                              // Adiciona o menu de ferramentas a tela
-        windowManager.addView(floatingBtnMain, buttonLayoutParams);                                         // Adiciona o botão principal a tela
         windowManager.addView(floatingBtnDelete, deleteLayoutParams);                                       // Adiciona o botão de deletar a tela
+        windowManager.addView(floatingBtnMain, buttonLayoutParams);                                         // Adiciona o botão principal a tela
         windowManager.updateViewLayout(floatingBtnDelete, deleteLayoutParams);                              // Atualiza a posição do botão de deletar
         windowManager.addView(resultColor, resultColorParams);                                              // Adiciona o resultado da cor a tela
-        WindowLayoutParamsPosition.applyImmersiveMode(filterScreen);                                        // Adiciona a tela de filtro a tela
         windowManager.addView(filterTab, filterTabParams);                                                  // Adiciona a aba de filtro a tela
         windowManager.addView(floatingConfirmProjection, confirmParams);                                    // Adiciona o botão de confirmação de projeção a tela
+        windowManager.addView(screenshotFilter, resultScreenshotParams);                                    // Adiciona o resultado da screenshot a tela
+        windowManager.addView(screenshotBright, resultScreenshotParams);                                        // Adiciona a mira de leitura de cor a tela
 
-        // Define os listeners de toque para os botões flutuantes
-        FloatingTouchButtons.darkBackgroundTouch(darkBackground, floatingBtnTools, filterTab, toolMenuRoot);
+        // LISTENERS DE TOQUE DAS FUNCIONALIDADES PRINCIPAIS
+
+        // TOQUE AO FUNDO ESCURO
+        FloatingTouchButtons.darkBackgroundTouch(darkBackground, floatingBtnTools, filterTab, toolMenuRoot, floatingIcon, floatingBtnMain);
+        // TOQUE DE COLETA DE COR
         FloatingTouchButtons.colorPickerTouch(this, floatingButtonScan, circleBright, floatingBtnTools, toolMenuRoot, windowManager, circleBrightParams, floatingConfirmProjection, darkBackground, floatingBtnMain, floatingIcon, floatingBtnTools);
-        FloatingTouchButtons.filterTouch(floatingButtonFilter, floatingBtnTools, filterTab);
+        // TOQUE DE FILTRO DE TELA
+        FloatingTouchButtons.ScreenshotFilterTab(floatingButtonFilter, floatingBtnTools, filterTab);
+        // TOQUE DE SELEÇÃO DO TIPO DE DALTONISMO NO FILTRO DE TELA
+        FloatingTouchButtons.filterBtnTouch(btnProtanopia, btnDeuteranopia, btnTritanopia,filterTab,darkBackground,floatingBtnMain,floatingConfirmProjection, this,screenshotFilter);
+        // TOQUE DE FECHAR A COR
         FloatingTouchButtons.closeResultColor(closeButtonColor, resultColor);
-        FloatingTouchButtons.filterBtnTouch(btnProtanopia, btnDeuteranopia, btnTritanopia, btnNoFilter, filterScreen, mediaProjection, floatingConfirmProjection, this);
-        FloatingTouchButtons.toolBtnTouchRedirect(this, floatingButtonCamera, floatingButtonMenu);
+        // TOQUE DE BOTÕES PRINCIPAIS
+        FloatingTouchButtons.toolBtnTouchRedirect(this, floatingButtonCamera, floatingButtonMenu, floatingBtnTools, filterTab, toolMenuRoot, floatingIcon, floatingBtnMain, darkBackground);
+        // SALVA O BOTÃO PRINCIPAL
+        FloatingHistoric.saveFloatingButtonMain(floatingBtnMain);
+        // BOTOES DO SCREENSHOT
+        FloatingTouchButtons.screenBtnTouch(saveCaptureFilter,closeButtonScreenshot,screenshotFilter,this);
+        CaptureScreenShot.getScreenshotBright(screenshotBright);
 
         // Move e ativa o botão principal
         floatingBtnMain.setOnTouchListener((v, event) -> {
@@ -213,15 +237,15 @@ public class FloatingWidgetService extends Service {
                     FloatingTouchButtons.holdingCondition(pressDuration, LONG_PRESS_THRESHOLD, isHolding, floatingBtnMain, floatingBtnDelete);
                     buttonLayoutParams.x = (int) event.getRawX() - offsets[0];
                     buttonLayoutParams.y = (int) event.getRawY() - offsets[1];
+                    FloatingPosCondition.checkPos(buttonLayoutParams.x,this,floatingButtonCamera,floatingButtonFilter,floatingButtonScan,floatingButtonMenu,floatingBtnTools,toolLayoutParams,floatingBtnMain,windowManager);
                     windowManager.updateViewLayout(floatingBtnMain, buttonLayoutParams);
                     moved = FloatingTouchButtons.movedCondition(pressDuration, LONG_PRESS_THRESHOLD);
-                    WindowLayoutParamsPosition.toolMenuPosition(windowManager, floatingBtnTools, toolLayoutParams, floatingBtnMain);
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
                     pressDuration = System.currentTimeMillis() - pressStartTime;
                     FloatingTouchButtons.cancelCondition(pressDuration, LONG_PRESS_THRESHOLD, darkBackground, floatingBtnTools, filterTab, toolMenuRoot, floatingIcon, floatingBtnMain);
-                    FloatingRemovingCondition.checkCollisionAndAnimate(floatingBtnMain, floatingBtnDelete, windowManager, buttonLayoutParams, moved);
+                    FloatingRemovingCondition.checkCollisionAndAnimate(floatingBtnMain, floatingBtnDelete, windowManager, buttonLayoutParams, moved,this);
                     break;
             }
             return false;
@@ -236,25 +260,30 @@ public class FloatingWidgetService extends Service {
                     return true;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
+                    DisplayMetrics metrics = this.getResources().getDisplayMetrics();
+                    int width = metrics.widthPixels;
+                    int height = metrics.heightPixels;
+                    int density = metrics.densityDpi;
+                    Log.d("DisplayMetric", "Width: " + width + ", Height: " + height + ", Density: " + density);
                     circleBright.setVisibility(View.GONE);
-                    try {
-                        windowManager.removeView(circleBright);
-                    } catch (Exception ignored) {}
-
                     new Handler(Looper.getMainLooper()).postDelayed(() -> {
                         int centerX = (int) circleBright.getCenterX();
-                        int centerY = (int) circleBright.getCenterY();
-
+                        int centerY = (int) circleBright.getCenterY() + 80;
+                        Log.d("DisplayMetric","X: "+centerX+", Y: "+centerY);
                         new Thread(() -> {
                             mediaProjection = ProjectionHolder.getMediaProjection();
                             int[] rgb = ColorReader.readColorAt(mediaProjection, getResources().getDisplayMetrics(), centerX, centerY);
                             if (rgb != null) {
                                 new Handler(Looper.getMainLooper()).post(() -> ColorReader.ColorResult(resultColor, rgb[0], rgb[1], rgb[2], db));
+                                circleBright.resetPosition();
                             } else {
                                 Log.e("ColorReader", "Falha ao obter a cor na posição: (" + centerX + ", " + centerY + ")");
                             }
                         }).start();
                     }, 300);
+                    try {
+                        windowManager.removeView(circleBright);
+                    } catch (Exception ignored) {}
                     break;
             }
             return true;

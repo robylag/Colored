@@ -32,6 +32,8 @@ public class ColorReader {
         int height = metrics.heightPixels;
         int density = metrics.densityDpi;
 
+        Log.d("DisplayMetric", "Width: " + width + ", Height: " + height + ", Density: " + density);
+
         if (mediaProjection != null) {
             Handler mainHandler = new Handler(Looper.getMainLooper());
             mediaProjection.registerCallback(new MediaProjection.Callback() {
@@ -78,8 +80,8 @@ public class ColorReader {
             );
             bitmap.copyPixelsFromBuffer(buffer);
 
-            Log.d("ColorDebug", "Bitmap size: " + bitmap.getWidth() + "x" + bitmap.getHeight());
-            Log.d("ColorDebug", "Requested pixel at: x=" + x + ", y=" + y);
+            Log.d("DisplayMetric", "Bitmap size: " + bitmap.getWidth() + "x" + bitmap.getHeight());
+            Log.d("DisplayMetric", "Requested pixel at: x=" + x + ", y=" + y);
 
             // Garante que os valores estão dentro dos limites do bitmap
             x = Math.max(0, Math.min(x, bitmap.getWidth() - 1));
@@ -105,7 +107,7 @@ public class ColorReader {
         ProjectionHolder.setMediaProjection(null);
         Log.d("ColorDebug", "ColorResult called with r=" + r + ", g=" + g + ", b=" + b);
         String name = ColorNameResult.getName(r,g,b,db);
-        String nameCategory = ColorNameResult.getCategory(name,db);
+        String nameCategory = ColorNameResult.getNameCategory(db);
         Log.d("ColorReader", "Color name: " + name + " RGB: "+r+","+g+","+b);
 
         FloatingAnimations.fadeBackground(resultColor);
