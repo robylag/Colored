@@ -26,13 +26,11 @@ public class ColorNameResult {
 
         cursor = db.rawQuery(query, args);
 
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                name = cursor.getString(cursor.getColumnIndexOrThrow("nome_cor"));
-                category = cursor.getString(cursor.getColumnIndexOrThrow("id_cor"));
-            }
-            cursor.close();
+        if (cursor.moveToFirst()) {
+            name = cursor.getString(cursor.getColumnIndexOrThrow("nome_cor"));
+            category = cursor.getString(cursor.getColumnIndexOrThrow("id_cor"));
         }
+        cursor.close();
 
         return name;
     }
@@ -42,12 +40,10 @@ public class ColorNameResult {
         query = "SELECT nome_cor FROM Categoria WHERE id_categoria = ?";
         String[] args = { category };
         cursor = db.rawQuery(query, args);
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                nameCategory = cursor.getString(cursor.getColumnIndexOrThrow("nome_cor"));
-            }
-            cursor.close();
+        if (cursor.moveToFirst()) {
+            nameCategory = cursor.getString(cursor.getColumnIndexOrThrow("nome_cor"));
         }
+        cursor.close();
         return nameCategory;
     }
 

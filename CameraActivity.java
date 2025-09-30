@@ -30,7 +30,6 @@ import com.example.coloredapp.floatingButtons.FloatingHistoric;
 import com.example.coloredapp.camera.AspectRatioFrameLayout;
 import com.example.coloredapp.camera.CameraRenderer;
 import com.example.coloredapp.camera.GLCameraView;
-import com.example.coloredapp.camera.CameraLight;
 import com.example.coloredapp.db.ColorNameResult;
 
 public class CameraActivity extends AppCompatActivity {
@@ -48,8 +47,8 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTitle("COLORED");
         setContentView(R.layout.camera_layout); // Mudar aqui
-        CameraLight flashlight = new CameraLight(this);
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         SQLiteDatabase db = dbHelper.openDatabase();
 

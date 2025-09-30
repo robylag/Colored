@@ -13,14 +13,10 @@ import android.util.Log;
 import android.provider.MediaStore;
 
 import android.opengl.GLSurfaceView;
-
-import androidx.annotation.RequiresApi;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
-@RequiresApi(api = Build.VERSION_CODES.CUPCAKE)
 public class GLCameraView extends GLSurfaceView {
 
     private static final String TAG = "GLCameraView";
@@ -53,9 +49,7 @@ public class GLCameraView extends GLSurfaceView {
     }
 
     private void init(Context context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
-            setEGLContextClientVersion(2);
-        }
+        setEGLContextClientVersion(2);
 
         renderer = new CameraRenderer(context, this);
 
@@ -162,9 +156,7 @@ public class GLCameraView extends GLSurfaceView {
                 out = context.getContentResolver().openOutputStream(uri);
             } else {
                 File picturesDir = null;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
-                    picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-                }
+                picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
                 File coloredDir = new File(picturesDir, "Colored");
                 if (!coloredDir.exists()) coloredDir.mkdirs();
                 File file = new File(coloredDir, "IMG_" + System.currentTimeMillis() + ".jpg");

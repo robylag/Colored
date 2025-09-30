@@ -2,18 +2,12 @@
 package com.example.coloredapp;
 
 // Importações de bibliotecas Android e do projeto
+
 import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ServiceInfo;
 import android.database.sqlite.SQLiteDatabase;
 import android.media.projection.MediaProjection;
-import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -26,18 +20,23 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.core.app.NotificationCompat;
 
 import com.example.coloredapp.db.ColorReader;
 import com.example.coloredapp.db.DatabaseHelper;
 import com.example.coloredapp.filter.CaptureScreenShot;
-import com.example.coloredapp.floatingButtons.*;
+import com.example.coloredapp.floatingButtons.FloatingHistoric;
+import com.example.coloredapp.floatingButtons.FloatingPosCondition;
+import com.example.coloredapp.floatingButtons.FloatingRemovingCondition;
+import com.example.coloredapp.floatingButtons.FloatingTouchButtons;
+import com.example.coloredapp.floatingButtons.ScannerScopeBright;
+import com.example.coloredapp.floatingButtons.WindowLayoutParamsPosition;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 // Classe de serviço responsável por exibir os elementos de sobreposição e processar a captura de tela
-public class FloatingWidgetService extends Service {
+public class FloatingWidgetService1 extends Service {
     private WindowManager windowManager;
     private long pressStartTime;
     private static final long LONG_PRESS_THRESHOLD = 300; // Tempo para detectar toque longo
@@ -46,92 +45,16 @@ public class FloatingWidgetService extends Service {
     private boolean moved = false;
     private MediaProjection mediaProjection;
 
-    // Método chamado quando o serviço é iniciado
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        // Verifica se há uma Intent válida (evita NullPointerException)
-        if (intent != null) {
-            // Extrai o código de resultado da permissão de captura de tela
-            int resultCode = intent.getIntExtra("resultCode", Activity.RESULT_CANCELED);
-            // Extrai os dados da Intent de captura de tela (usados para criar a MediaProjection)
-            Intent data = intent.getParcelableExtra("data");
-
-            // Verifica se a permissão foi negada ou se os dados estão ausentes
-            if (resultCode != Activity.RESULT_OK || data == null) {
-                Log.e("FloatingWidgetService", "Permissão de MediaProjection não concedida.");
-                stopSelf();
-                // Retorna para que o sistema não tente recriar o serviço automaticamente
-                return START_NOT_STICKY;
-            }
-            // Inicia o serviço em primeiro plano com uma notificação, necessário no Android 10+ (Q)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                startForegroundService();
-            }
-
-            // Cria uma instância de MediaProjectionManager para obter a MediaProjection
-            MediaProjectionManager projectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-            // Cria a MediaProjection com os dados recebidos da permissão do usuário
-            MediaProjection projection = projectionManager.getMediaProjection(resultCode, data);
-            // Armazena a projeção em uma classe auxiliar estática para ser usada em outros lugares do app
-            ProjectionHolder.setMediaProjection(projection);
-            // Inicializa a interface de usuário flutuante, se a versão do Android for compatível
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                initializeFloatingUI();
-            }
-        }
-        // Retorna START_STICKY para que o sistema tente recriar o serviço se ele for encerrado
-        return START_STICKY;
-    }
-
-
-    // Cria um canal de notificação para Android O ou superior
-    private void createNotification() {
-        // Verifica se a versão do Android suporta canais de notificação
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Cria um canal de notificação para notificações em primeiro plano
-            NotificationChannel channel = new NotificationChannel(
-                    "media_projection_channel",
-                    "Media Projection",
-                    NotificationManager.IMPORTANCE_LOW
-            );
-            channel.setDescription("Canal usado para o serviço de leitura de cor e filtro de tela.");
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null) {
-                manager.createNotificationChannel(channel);
-            }
-        }
-    }
-
-    // Inicializa o serviço em primeiro plano com uma notificação ativa
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    private void startForegroundService() {
-        createNotification();
-        Notification notification = new NotificationCompat.Builder(this, "media_projection_channel")
-                .setContentTitle("Recursos de Leitura e Filtro Habilitado")
-                .setContentText("O aplicativo COLORED está utlizando do recursos para o funcionamento da leitura de cor e da aplicação de tela, para desabilitar, arraste o botão para a exlusão.")
-                .setSmallIcon(R.drawable.app_logo)
-                .build();
-
-        startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION);
-    }
-
-    // Serviço não permite bind
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
     // FUNÇÃO RESPONSÁVEL PELA INICIALIZAÇÃO DA INTERFACE PRINCIPAL DO APLICATIVO
     @SuppressLint({"RtlHardcoded", "InflateParams", "ClickableViewAccessibility", "ResourceType"})
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void initializeFloatingUI() {
+    public void onCreate() {
+        super.onCreate();
         // INSTANCIA DO BANCO DE DADOS PARA LEITURA DE COR
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         SQLiteDatabase db = dbHelper.openDatabase();
 
-        // INSTANCIA PARA A FINALIZAÇÃO DA PROJEÇÃO
-        ProjectionHolder.getMediaProjection().stop();
-        ProjectionHolder.setMediaProjection(null);
+        Log.d("FloatingWidgetService","Iniciando o front0");
 
         // INSTANCIA PARA TODOS OS LAYOUT
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
@@ -288,5 +211,19 @@ public class FloatingWidgetService extends Service {
             }
             return true;
         });
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        // O que o service vai fazer em background
+        Log.d("MySimpleService", "Service iniciado");
+        // Se quiser que ele continue rodando mesmo se o app for fechado:
+        return START_STICKY;
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 }

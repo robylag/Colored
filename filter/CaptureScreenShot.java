@@ -1,5 +1,6 @@
 package com.example.coloredapp.filter;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -27,12 +28,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public class CaptureScreenShot {
 
     private static final String TAG = "CaptureScreenShot";
+    @SuppressLint("StaticFieldLeak")
     private static View screenshotBright;
-    public static void getScreenshotBright(View btn){
+
+    public static void getScreenshotBright(View btn) {
         screenshotBright = btn;
     }
 
@@ -49,121 +53,100 @@ public class CaptureScreenShot {
             return;
         }
 
+        // Cria ImageReader
         final ImageReader imageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2);
 
+        // Registra callback obrigatório
+        mediaProjection.registerCallback(new MediaProjection.Callback() {
+            @Override
+            public void onStop() {
+                super.onStop();
+                Log.d(TAG, "MediaProjection parou");
+                try {
+                    imageReader.close();
+                } catch (Exception ignored) {}
+            }
+        }, new Handler(Looper.getMainLooper()));
+
+        // Cria VirtualDisplay
         final VirtualDisplay virtualDisplay;
         try {
             virtualDisplay = mediaProjection.createVirtualDisplay(
-                    "ScreenCapture", width, height, screenDensity,
+                    "ScreenCapture",
+                    width,
+                    height,
+                    screenDensity,
                     DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                    imageReader.getSurface(), null, null
+                    imageReader.getSurface(),
+                    null,
+                    new Handler(Looper.getMainLooper())
             );
-            Log.d(TAG, "VirtualDisplay criado com sucesso: " + virtualDisplay);
+            Log.d(TAG, "VirtualDisplay criado: " + virtualDisplay);
         } catch (Exception e) {
             Log.e(TAG, "Erro ao criar VirtualDisplay", e);
-            // garante que liberamos reader se algo falhar
-            try { imageReader.close(); } catch (Exception ex) { /* ignore */ }
+            try { imageReader.close(); } catch (Exception ignored) {}
             return;
         }
 
-        imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
-            boolean captured = false; // flag para evitar captura múltipla
+        // Listener de captura
+        imageReader.setOnImageAvailableListener(reader -> {
+            try (Image image = reader.acquireLatestImage()) {
+                if (image == null) return;
 
-            @Override
-            public void onImageAvailable(ImageReader reader) {
-                if (captured) return;
-                captured = true;
+                Log.d(TAG, "Imagem capturada: " + image.getWidth() + "x" + image.getHeight());
 
-                Log.d(TAG, "onImageAvailable chamado");
-                try (Image image = reader.acquireLatestImage()) {
-                    if (image != null) {
-                        Log.d(TAG, "Imagem capturada: " + image.getWidth() + "x" + image.getHeight());
+                // Feedback visual e sonoro
+                FloatingAnimations.captureFade(screenshotBright, 300);
+                SoundEffects.playScreenshotShutter(context);
 
-                        FloatingAnimations.captureFade(screenshotBright,300);
-                        SoundEffects.playScreenshotShutter(context);
+                // Converte Image -> Bitmap
+                Bitmap original = imageToBitmap(image);
+                Bitmap filtered = applyDaltonismFilter(original, filterType);
 
-                        // Converte o frame para Bitmap
-                        Bitmap original = imageToBitmap(image);
-                        Log.d(TAG, "Bitmap original criado");
+                // Salva bitmap
+                String filename = "print_daltonismo.png";
+                saveBitmap(context, filtered, filename);
 
-                        // Aplica o filtro de daltonismo
-                        Bitmap filtered = applyDaltonismFilter(original, filterType);
-                        Log.d(TAG, "Filtro aplicado: tipo=" + filterType);
-
-                        // Salva a imagem processada na pasta interna
-                        String filename = "print_daltonismo.png";
-                        saveBitmap(context, filtered, filename);
-
-                        // Carregamos o bitmap salvo e atualizamos a UI *na main thread*
+                // Atualiza UI na main thread
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    try {
                         File folder = new File(context.getFilesDir(), "ColoredScreenshots");
                         File file = new File(folder, filename);
-
                         if (file.exists()) {
                             Bitmap savedBitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+                            ImageView previewImageView = screenshotView.findViewById(R.id.screenshot);
+                            if (previewImageView != null) previewImageView.setImageBitmap(savedBitmap);
 
-                            // Atualiza UI na main thread
-                            new Handler(Looper.getMainLooper()).post(() -> {
-                                try {
-                                    ImageView previewImageView = screenshotView.findViewById(R.id.screenshot);
-                                    if (previewImageView != null) {
-                                        previewImageView.setImageBitmap(savedBitmap);
-                                    } else {
-                                        Log.w(TAG, "previewImageView (R.id.screenshot) é null");
-                                    }
-
-                                    // mostra overlays (ou qualquer comportamento UI que desejar)
-                                    FloatingAnimations.fadeIn(screenshotView);
-                                    FloatingAnimations.fadeBackground(darkBackground);
-                                    floatingMain.setVisibility(View.VISIBLE);
-                                    filterScreen.setVisibility(View.VISIBLE);
-
-                                    Log.d(TAG, "Imagem carregada e mostrada no ImageView (UI thread)");
-                                } catch (Exception uiEx) {
-                                    Log.e(TAG, "Erro ao atualizar UI com a imagem", uiEx);
-                                }
-                            });
+                            FloatingAnimations.fadeIn(screenshotView);
+                            FloatingAnimations.fadeBackground(darkBackground);
+                            floatingMain.setVisibility(View.VISIBLE);
+                            filterScreen.setVisibility(View.VISIBLE);
                         } else {
                             Log.e(TAG, "Arquivo não encontrado: " + file.getAbsolutePath());
                         }
-
-                        // libera bitmaps temporários
-                        original.recycle();
-                        filtered.recycle();
-                        Log.d(TAG, "Bitmaps temporários liberados");
-                    } else {
-                        Log.w(TAG, "Nenhuma imagem disponível no ImageReader");
+                    } catch (Exception uiEx) {
+                        Log.e(TAG, "Erro ao atualizar UI", uiEx);
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, "Erro em onImageAvailable", e);
-                } finally {
-                    // Limpeza: desregistra listener, fecha ImageReader e VirtualDisplay
-                    try {
-                        reader.setOnImageAvailableListener(null, null);
-                        reader.close();
-                    } catch (Exception ex) {
-                        Log.w(TAG, "Erro fechando ImageReader", ex);
-                    }
+                });
 
-                    try {
-                        if (virtualDisplay != null) {
-                            virtualDisplay.release();
-                            Log.d(TAG, "VirtualDisplay liberado");
-                        }
-                    } catch (Exception ex) {
-                        Log.w(TAG, "Erro liberando VirtualDisplay", ex);
-                    }
+                // Libera bitmaps
+                original.recycle();
+                filtered.recycle();
+                Log.d(TAG, "Bitmaps liberados");
 
-                    // opcional: se você quiser parar a MediaProjection quando terminar,
-                    // faça: mediaProjection.stop(); ProjectionHolder.setMediaProjection(null);
-                    // mas cuidado: só faça isso se não precisar mais da projeção.
-                }
+            } catch (Exception e) {
+                Log.e(TAG, "Erro em onImageAvailable", e);
+            } finally {
+                // Limpeza
+                try { reader.setOnImageAvailableListener(null, null); } catch (Exception ignored) {}
+                try { reader.close(); } catch (Exception ignored) {}
+                try { if (virtualDisplay != null) virtualDisplay.release(); } catch (Exception ignored) {}
             }
-        }, null);
+        }, new Handler(Looper.getMainLooper()));
     }
 
     // Converte Image -> Bitmap
     private static Bitmap imageToBitmap(Image image) {
-        Log.d(TAG, "Convertendo Image para Bitmap");
         Image.Plane[] planes = image.getPlanes();
         ByteBuffer buffer = planes[0].getBuffer();
         int pixelStride = planes[0].getPixelStride();
@@ -176,15 +159,13 @@ public class CaptureScreenShot {
                 Bitmap.Config.ARGB_8888
         );
         bitmap.copyPixelsFromBuffer(buffer);
-        Log.d(TAG, "Bitmap criado a partir do buffer");
 
         return Bitmap.createBitmap(bitmap, 0, 0, image.getWidth(), image.getHeight());
     }
 
     // Aplica filtro de daltonismo
     private static Bitmap applyDaltonismFilter(Bitmap src, int filterType) {
-        Log.d(TAG, "Aplicando filtro tipo=" + filterType);
-        Bitmap output = Bitmap.createBitmap(src.getWidth(), src.getHeight(), src.getConfig());
+        Bitmap output = Bitmap.createBitmap(src.getWidth(), src.getHeight(), Objects.requireNonNull(src.getConfig()));
         Canvas canvas = new Canvas(output);
         Paint paint = new Paint();
 
@@ -192,25 +173,25 @@ public class CaptureScreenShot {
         switch (filterType) {
             case 0: // Protanopia
                 cm = new ColorMatrix(new float[]{
-                        0.567f, 0.433f, 0.0f, 0, 0,
-                        0.558f, 0.442f, 0.0f, 0, 0,
-                        0.0f, 0.242f, 0.758f, 0, 0,
+                        0.567f, 0.433f, 0, 0, 0,
+                        0.558f, 0.442f, 0, 0, 0,
+                        0, 0.242f, 0.758f, 0, 0,
                         0, 0, 0, 1, 0
                 });
                 break;
             case 1: // Deuteranopia
                 cm = new ColorMatrix(new float[]{
-                        0.625f, 0.375f, 0.0f, 0, 0,
-                        0.7f, 0.3f, 0.0f, 0, 0,
-                        0.0f, 0.3f, 0.7f, 0, 0,
+                        0.625f, 0.375f, 0, 0, 0,
+                        0.7f, 0.3f, 0, 0, 0,
+                        0, 0.3f, 0.7f, 0, 0,
                         0, 0, 0, 1, 0
                 });
                 break;
             case 2: // Tritanopia
                 cm = new ColorMatrix(new float[]{
-                        0.95f, 0.05f, 0.0f, 0, 0,
-                        0.0f, 0.433f, 0.567f, 0, 0,
-                        0.0f, 0.475f, 0.525f, 0, 0,
+                        0.95f, 0.05f, 0, 0, 0,
+                        0, 0.433f, 0.567f, 0, 0,
+                        0, 0.475f, 0.525f, 0, 0,
                         0, 0, 0, 1, 0
                 });
                 break;
@@ -224,18 +205,14 @@ public class CaptureScreenShot {
         return output;
     }
 
-    // Salvar em pasta interna do app
+    // Salva bitmap em pasta interna
     private static void saveBitmap(Context context, Bitmap bitmap, String filename) {
         File folder = new File(context.getFilesDir(), "ColoredScreenshots");
-        if (!folder.exists()) {
-            boolean created = folder.mkdirs();
-            Log.d(TAG, "Pasta criada? " + created + " -> " + folder.getAbsolutePath());
-        }
+        if(!folder.exists()) folder.mkdirs();
 
         File file = new File(folder, filename);
         try (FileOutputStream out = new FileOutputStream(file)) {
-            boolean ok = bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-            Log.d(TAG, "Compressão e salvamento OK? " + ok + " -> " + file.getAbsolutePath());
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
         } catch (IOException e) {
             Log.e(TAG, "Erro ao salvar bitmap", e);
         }

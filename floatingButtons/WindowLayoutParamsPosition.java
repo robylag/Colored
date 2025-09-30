@@ -113,7 +113,7 @@ public class WindowLayoutParamsPosition {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public static WindowManager.LayoutParams resultColorParams(WindowManager.LayoutParams circleBrightParams) {
+    public static WindowManager.LayoutParams resultColorParams() {
         return new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -130,20 +130,6 @@ public class WindowLayoutParamsPosition {
         circleBrightParams.y = 0;
     }
 
-    public static WindowManager.LayoutParams filterScreenParams() {
-        return new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                        ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                        : WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                        | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-                        | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR,
-                PixelFormat.TRANSLUCENT
-        );
-    }
-
     public static WindowManager.LayoutParams darkBackgroundParams() {
         return new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -158,15 +144,13 @@ public class WindowLayoutParamsPosition {
         );
     }
     public static void applyImmersiveMode(View view) {
-        view.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
-            view.setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            );
-        });
+        view.getViewTreeObserver().addOnGlobalLayoutListener(() -> view.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        ));
     }
     public static WindowManager.LayoutParams confirmParams() {
         return new WindowManager.LayoutParams(

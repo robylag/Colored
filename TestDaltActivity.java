@@ -15,26 +15,23 @@ import com.example.coloredapp.floatingButtons.FloatingAnimations;
 import com.example.coloredapp.floatingButtons.FloatingHistoric;
 import com.example.coloredapp.ishihawaPlates.IshiharaPlates;
 import com.example.coloredapp.ishihawaPlates.ishiharaList;
-
+import com.example.coloredapp.floatingButtons.FloatingTouchButtons;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class TestDaltActivity extends AppCompatActivity {
     int currentIndex = 0;
     @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        FloatingTouchButtons.getActivity(this);
         setTitle("Teste de Daltonismo");
         FloatingHistoric.closeFloating();
         setContentView(R.layout.test_layout);
         @SuppressLint({"MissingInflatedId", "LocalSuppress"}) View confirmButton = findViewById(R.id.confirm_button);
 
-        confirmButton.setOnClickListener(v ->{
-            startTest();
-        });
+        confirmButton.setOnClickListener(v -> startTest());
     }
-
+    @SuppressLint("SetTextI18n")
     private void startTest(){
         List<IshiharaPlates> plates = ishiharaList.loadRandomPlates();
         setContentView(R.layout.test_dalt);

@@ -13,22 +13,15 @@ import android.view.View;
 import androidx.annotation.NonNull;
 
 public class CameraScanner extends View {
-    private float centerX = 550f;
-    private float centerY = 900f;
-
-    public float getCenterX() {
-        return centerX;
-    }
-    public float getCenterY() {
-        return centerY;
-    }
+    private final float centerX = 550f;
+    private final float centerY = 900f;
 
     private final Paint darkPaint = new Paint();
     private final Paint glowPaint = new Paint();
     private final Paint clearPaint = new Paint();
     private final Paint crosshairPaint = new Paint();
 
-    private float radius = 200f;
+    private final float radius = 200f;
 
     public CameraScanner(Context context) {
         super(context);

@@ -1,6 +1,7 @@
 package com.example.coloredapp.floatingButtons;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -28,8 +29,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.coloredapp.CameraActivity;
-import com.example.coloredapp.FloatingWidgetService;
-import com.example.coloredapp.PermissionActivity;
+import com.example.coloredapp.PermissionActivity1;
 import com.example.coloredapp.ProjectionHolder;
 import com.example.coloredapp.R;
 import com.example.coloredapp.filter.CaptureScreenShot;
@@ -37,27 +37,31 @@ import com.example.coloredapp.TestDaltActivity;
 
 public class FloatingTouchButtons {
     private static boolean clicked = false;
+
+    @SuppressLint("StaticFieldLeak")
+    public static Activity activity;
+
     public static boolean isProjectionActive=false;
     // Condição de segmentação do botão flutuante (long press) para verificar se foi considerado como segurando botão
     public static void holdingCondition(long pressDuration, long LONG_PRESS_THRESHOLD, AtomicBoolean isHolding, View floatingButton, View deleteButton) {
-        Log.d("FloatingWidgetService", "Duração do tempo segurado: " + pressDuration);
+        Log.d("FloatingTouchButtons", "Duração do tempo segurado: " + pressDuration);
 
         if (pressDuration >= LONG_PRESS_THRESHOLD && !isHolding.get()) {
-            Log.d("FloatingWidgetService", "Botão segurado, prosseguindo abertura do botão de deletar.");
+            Log.d("FloatingTouchButtons", "Botão segurado, prosseguindo abertura do botão de deletar.");
 
             isHolding.set(true); // Marca como segurando
 
             FloatingAnimations.scaleUp(floatingButton);
             FloatingAnimations.fadeIn(deleteButton);
         }
-        else Log.i("FloatingWidgetService", "Botão não segurado, não prosseguindo abertura do botão de deletar.");
+        else Log.i("FloatingTouchButtons", "Botão não segurado, não prosseguindo abertura do botão de deletar.");
     }
     public static boolean movedCondition(long pressDuration, long LONG_PRESS_THRESHOLD) {
         return pressDuration >= LONG_PRESS_THRESHOLD;
     }
     public static void cancelCondition(long pressDuration, long LONG_PRESS_THRESHOLD, View darkBackground, View toolMenu, View filterTab, View toolMenuRoot, ImageView floatingBtnIcon, View floatingBtnMain){
         if(pressDuration < LONG_PRESS_THRESHOLD && !clicked){
-            Log.d("FloatingWidgetService","Executando abrir as ferramentas");
+            Log.d("FloatingTouchButtons","Executando abrir as ferramentas");
             clicked = true;
             // Executar a função de abrir os botões de ferramentas;
             floatingBtnIcon.setImageResource(R.drawable.close_btn);
@@ -68,7 +72,7 @@ public class FloatingTouchButtons {
             FloatingAnimations.fadeBackground(toolMenu);
         }
         else if(pressDuration < LONG_PRESS_THRESHOLD){
-            Log.d("FloatingWidgetService","Executando fechar as ferramentas");
+            Log.d("FloatingTouchButtons","Executando fechar as ferramentas");
             clicked = false;
             // Executar a função de fechar os botões de ferramentas;
             floatingBtnIcon.setImageResource(R.drawable.logo);
@@ -108,7 +112,6 @@ public class FloatingTouchButtons {
                 FloatingAnimations.closeToolFloating(darkBackground,toolMenu,floatingBtnMain,toolMenuRoot,floatingBtnIcon);
                 FloatingAnimations.fadeOut(filterTab);
                 clicked = false;
-                context.stopService(new Intent(context, FloatingWidgetService.class));
                 new Handler(Looper.getMainLooper()).post(() -> {
                     Intent cameraIntent = new Intent(context, CameraActivity.class);
                     cameraIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -122,7 +125,6 @@ public class FloatingTouchButtons {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 FloatingAnimations.closeToolFloating(darkBackground,toolMenu,floatingBtnMain,toolMenuRoot,floatingBtnIcon);
                 clicked = false;
-                context.stopService(new Intent(context, FloatingWidgetService.class));
                 new Handler(Looper.getMainLooper()).post(() -> {
                     Intent menuIntent = new Intent(context, TestDaltActivity.class);
                     menuIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -139,13 +141,9 @@ public class FloatingTouchButtons {
     public static void colorPickerTouch(Context context, View floatingButtonFilter, View circleBright, View toolmenu, View toolMenuRoot, WindowManager windowManager, WindowManager.LayoutParams circleBrightParams, View floatingConfirmProjection,View darkBackground, View floatingBtnMain, ImageView floatingBtnIcon, View toolMenu) {
         floatingButtonFilter.setOnTouchListener((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                // VERIFICANDO SE HÁ UMA PROJEÇÃO ATIVA NO MOMENTO
-                if(ProjectionHolder.getMediaProjection() != null){
-                    ProjectionHolder.getMediaProjection().stop();
-                    ProjectionHolder.setMediaProjection(null);
-                }
                 // EXECUTANDO AS ANIMAÇÕES DE ABERTURA E FECHADURA
                 Log.d("FloatingTouchButtons", "Projeção encerrada com sucesso.");
+                closeActivity();
                 FloatingAnimations.fadeIn(floatingConfirmProjection);
                 FloatingAnimations.closeToolFloating(darkBackground,toolMenu,floatingBtnMain,toolMenuRoot,floatingBtnIcon);
                 clicked = false;
@@ -156,7 +154,7 @@ public class FloatingTouchButtons {
                     floatingConfirmProjection.setVisibility(View.GONE);
 
                     // SOLICITANDO A PERMISSÃO DE TRANSMISSÃO DE TELA
-                    Intent permissionIntent = new Intent(context, PermissionActivity.class);
+                    Intent permissionIntent = new Intent(context, PermissionActivity1.class);
                     permissionIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(permissionIntent);
 
@@ -225,6 +223,7 @@ public class FloatingTouchButtons {
     public static void filterBtnTouch(View btnProtanopia, View btnDeuteranopia, View btnTritanopia, View filterScreen,View darkBackground,View floatingMain,View floatingButtonFilter,Context context, View screenshotFilter) {
         // ELEMENTO DO RESULTADO DA CAPTURA DE TELA
         View ScreenView = screenshotFilter.findViewById(R.id.resultScreenshot);
+        closeActivity();
         // CAPTURA DE TELA COM FILTRO PARA PROTANOPIA
         btnProtanopia.setOnClickListener(v -> {
             Log.d("FloatingTouchButtons", "Protanopia Clicado, iniciar captura");
@@ -252,7 +251,7 @@ public class FloatingTouchButtons {
             floatingConfirmProjection.setVisibility(View.GONE);
 
             // Inicia a PermissionActivity que solicita a permissão de captura
-            Intent permissionIntent = new Intent(context, PermissionActivity.class);
+            Intent permissionIntent = new Intent(context, PermissionActivity1.class);
             permissionIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(permissionIntent);
 
@@ -350,12 +349,20 @@ public class FloatingTouchButtons {
             } catch (Exception e) {
                 Log.e("FloatingTouchButtons","Erro ao salvar imagem");
             }
-
-
         });
         closeButtonScreenshot.setOnClickListener(v -> {
             Log.d("FloatingTouchButtons", "Fechando Screenshot");
             ScreenView.setVisibility(View.GONE);
         });
+    }
+
+    public static void getActivity(Activity activity1) {
+        if (activity1 != null) {
+            activity = activity1;
+        }
+    }
+
+    public static void closeActivity() {
+        if (activity!=null) activity.finish();
     }
 }

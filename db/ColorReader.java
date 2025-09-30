@@ -61,7 +61,7 @@ public class ColorReader {
         try {
             Thread.sleep(150); // tempo para garantir que a imagem foi capturada
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Log.e("ColorReader","Erro ao esperar a captura da imagem");
         }
 
         Image image = imageReader.acquireLatestImage();

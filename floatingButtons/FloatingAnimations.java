@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.view.View;// Animação de FadeIn do botão excluir.
-import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 
@@ -72,23 +71,6 @@ public class FloatingAnimations {
             @Override
             public void onAnimationEnd(Animator animation) {
                 btn.setVisibility(View.GONE);
-            }
-        });
-        fadeOut.start();
-    }
-
-    public static void fadeOutScope(View btn, WindowManager windowManager){
-        ObjectAnimator fadeOut = ObjectAnimator.ofFloat(btn,"alpha",1f, 0f);
-        fadeOut.setDuration(500);
-
-        fadeOut.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                try {
-                    if (btn.isAttachedToWindow()) {
-                        windowManager.removeView(btn);
-                    }
-                } catch (Exception ignored) {}
             }
         });
         fadeOut.start();

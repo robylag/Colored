@@ -1,27 +1,15 @@
 package com.example.coloredapp;
 
-import android.content.Context;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
-import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Button;
-import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-
 import com.example.coloredapp.db.DatabaseCopy;
-import com.example.coloredapp.db.DatabaseHelper;
 
 public class MainActivity extends AppCompatActivity {
-
-    private static final int REQUEST_MEDIA_PROJECTION = 1;
-    private MediaProjectionManager projectionManager;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,38 +33,17 @@ public class MainActivity extends AppCompatActivity {
 
         DatabaseCopy.copyDatabase(this);
 
-        DatabaseHelper dbHelper = new DatabaseHelper(this);
-        SQLiteDatabase db = dbHelper.openDatabase();
-
-        projectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-        startMediaProjectionRequest();
-    }
-
-
-
-    private void startMediaProjectionRequest() {
-        Intent captureIntent = projectionManager.createScreenCaptureIntent();
-        startActivityForResult(captureIntent, REQUEST_MEDIA_PROJECTION);
+        Intent serviceIntent = new Intent(this, FloatingWidgetService1.class);
+        startService(serviceIntent);
+        finish();
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_MEDIA_PROJECTION) {
-            if (resultCode == RESULT_OK && data != null){
-                Intent serviceIntent = new Intent(this, FloatingWidgetService.class);
-                serviceIntent.putExtra("resultCode", resultCode);
-                serviceIntent.putExtra("data", data);
-                Log.d("MainActivity-Colored","Iniciando o serviço");
-
-                ContextCompat.startForegroundService(this, serviceIntent);
-
-                finish();
-            } else {
-                Toast.makeText(this, "Permissão de captura de tela negada", Toast.LENGTH_SHORT).show();
-                finish();
-            }
+    protected void onResume() {
+        super.onResume();
+        if (Settings.canDrawOverlays(this)) {
+            Intent serviceIntent = new Intent(this, FloatingWidgetService1.class);
+            startService(serviceIntent);
         }
-        else super.onActivityResult(requestCode, resultCode, data);
     }
 }
-

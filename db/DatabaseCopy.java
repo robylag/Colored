@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Objects;
 
 public class DatabaseCopy {
     private static final String DB_NAME = "ColoredAPP.db";
@@ -17,7 +18,7 @@ public class DatabaseCopy {
 
         if (!dbFile.exists()) {
             // Cria a pasta databases se não existir
-            dbFile.getParentFile().mkdirs();
+            Objects.requireNonNull(dbFile.getParentFile()).mkdirs();
 
             try (InputStream is = context.getAssets().open(DB_NAME);
                  OutputStream os = new FileOutputStream(dbFile)) {

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class ishiharaList {
-    private static List<IshiharaPlates> allPlates = new ArrayList<>();
+    private static final List<IshiharaPlates> allPlates = new ArrayList<>();
     private static int deuteranopiaPoint = 0;
     private static int protanopiaPoint = 0;
     private static int tritanopiaPoint = 0;
@@ -19,23 +19,17 @@ public class ishiharaList {
         allPlates.add(new IshiharaPlates(R.drawable.plate_01,"6",null,"Protanopia"));
         allPlates.add(new IshiharaPlates(R.drawable.plate_02,"9",null,"Protanopia"));
         allPlates.add(new IshiharaPlates(R.drawable.plate_03,"4",null,"Protanopia"));
-        allPlates.add(new IshiharaPlates(R.drawable.plate_04,"1",null,"Protanopia"));
-        allPlates.add(new IshiharaPlates(R.drawable.plate_05,"5",null,"Protanopia"));
         allPlates.add(new IshiharaPlates(R.drawable.plate_06,"1",null,"Deuteranopia"));
         allPlates.add(new IshiharaPlates(R.drawable.plate_07,"9",null,"Deuteranopia"));
         allPlates.add(new IshiharaPlates(R.drawable.plate_08,"6",null,"Deuteranopia"));
-        allPlates.add(new IshiharaPlates(R.drawable.plate_09,"4",null,"Deuteranopia"));
-        allPlates.add(new IshiharaPlates(R.drawable.plate_10,"5",null,"Deuteranopia"));
         allPlates.add(new IshiharaPlates(R.drawable.plate_11,"5",null,"Tritanopia"));
         allPlates.add(new IshiharaPlates(R.drawable.plate_12,"4",null,"Tritanopia"));
         allPlates.add(new IshiharaPlates(R.drawable.plate_13,"6",null,"Tritanopia"));
-        allPlates.add(new IshiharaPlates(R.drawable.plate_14,"9",null,"Tritanopia"));
-        allPlates.add(new IshiharaPlates(R.drawable.plate_15,"1",null,"Tritanopia"));
     }
 
     public static List<IshiharaPlates> loadRandomPlates() {
         Collections.shuffle(allPlates);
-        return allPlates.subList(0, 15);
+        return allPlates.subList(0, 6);
     }
 
     public static void resultCheckAnswer(String answer, String correctAnswer, String DaltonicType) {
@@ -65,7 +59,7 @@ public class ishiharaList {
         int maxPoints = Math.max(protanopiaPoint, Math.max(deuteranopiaPoint, tritanopiaPoint));
 
         // Se a pessoa acertou quase tudo, assume visão normal
-        if (correctPoint >= 13) {
+        if (correctPoint >= 5) {
             return "Visão normal de cores";
         }
 
@@ -73,10 +67,8 @@ public class ishiharaList {
             return "Suspeita de Protanopia";
         } else if (maxPoints == deuteranopiaPoint) {
             return "Suspeita de Deuteranopia";
-        } else if (maxPoints == tritanopiaPoint) {
-            return "Suspeita de Tritanopia";
         } else {
-            return "Resultado inconclusivo";
+            return "Suspeita de Tritanopia";
         }
     }
 

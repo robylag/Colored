@@ -113,9 +113,30 @@ public class CameraRenderer implements GLSurfaceView.Renderer {
 
         rgb = readCenterPixelRGB();
         Log.d("ColorReader", "Pixel central original: R=" + rgb[0] + " G=" + rgb[1] + " B=" + rgb[2]);
-        CameraActivity.getR(rgb[0]);
-        CameraActivity.getG(rgb[1]);
-        CameraActivity.getB(rgb[2]);
+        int r = rgb[0];
+        int g = rgb[1];
+        int b = rgb[2];
+
+        float nr = (float) ((((r / 255.0) - 0.5) * 2f) + 0.5) * 255;
+        float ng = (float) ((((g / 255.0) - 0.5) * 2f) + 0.5) * 255;
+        float nb = (float) ((((b / 255.0) - 0.5) * 2f) + 0.5) * 255;
+
+        // ---- SATURAÇÃO ----
+        float gray = (0.3f * nr + 0.59f * ng + 0.11f * nb);
+        nr = gray + (nr - gray) * 2f;
+        ng = gray + (ng - gray) * 2f;
+        nb = gray + (nb - gray) * 2f;
+
+        // ---- CLAMP ----
+        int fr = Math.min(255, Math.max(0, Math.round(nr)));
+        int fg = Math.min(255, Math.max(0, Math.round(ng)));
+        int fb = Math.min(255, Math.max(0, Math.round(nb)));
+
+        Log.d("ColorReader", "Pixel ajustado contraste: R=" + nr + " G=" + ng + " B=" + nb);
+
+        CameraActivity.getR(fr);
+        CameraActivity.getG(fg);
+        CameraActivity.getB(fb);
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
@@ -157,7 +178,7 @@ public class CameraRenderer implements GLSurfaceView.Renderer {
                 int pix = data[i * width + j];
 
                 int alpha = (pix >> 24) & 0xff;
-                int red   = (pix >> 0) & 0xff;
+                int red   = (pix) & 0xff;
                 int green = (pix >> 8) & 0xff;
                 int blue  = (pix >> 16) & 0xff;
 
@@ -210,7 +231,7 @@ public class CameraRenderer implements GLSurfaceView.Renderer {
         int pixel = pixelBuffer.get(0);
 
         // 6️⃣ Extrair cores
-        int r = (pixel >> 0) & 0xFF;
+        int r = (pixel) & 0xFF;
         int g = (pixel >> 8) & 0xFF;
         int b = (pixel >> 16) & 0xFF;
 
